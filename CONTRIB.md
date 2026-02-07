@@ -17,18 +17,24 @@ Before you begin, ensure you have the following installed:
 
 1.  **Clone the repository**:
     ```bash
-    git clone https://github.com/your-username/VideoCompressor.git # Replace with actual repo URL
-    cd VideoCompressor
+    git clone https://github.com/hheimerd/video-compressor.git
+    cd video-compressor
     ```
 
-2.  **Run in Development Mode**:
+2.  **Install Dependencies**:
+    Run the setup script to install Go dependencies and download required binaries (ffmpeg/ffprobe):
+    ```bash
+    ./scripts/install_go_dependencies.sh
+    ```
+
+3.  **Run in Development Mode**:
     To run the application in development mode with live-reloading:
     ```bash
     wails dev
     ```
     This command will open the application and automatically recompile and reload the frontend/backend when changes are detected.
 
-3.  **Build for Production**:
+4.  **Build for Production**:
     To build a production-ready executable:
     ```bash
     wails build

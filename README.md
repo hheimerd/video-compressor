@@ -10,10 +10,6 @@ A simple desktop application built with Wails for compressing video files. Easil
 *   **Resolution Selection**: Choose from predefined resolutions (e.g., 1920x1080, 1280x720, 854x480) for compression.
 *   **Simple Compression**: Compresses video and saves the output file.
 
-## Requirements
-
-For the application to function correctly, the `ffmpeg` executable must be present in the same directory as the Video Compressor application executable. You can download `ffmpeg` from their official website: [ffmpeg.org](https://ffmpeg.org/download.html)
-
 ## Installation
 
 The easiest way to install the Video Compressor is to download the appropriate archive for your operating system from the [Releases page](https://github.com/hheimerd/video-compressor/releases).
