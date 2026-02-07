@@ -47,12 +47,37 @@
     }
     select {
       margin-bottom: 20px;
+      width: 100%;
+      max-width: 240px; /* Match button width roughly or slightly wider */
+      font-family: inherit;
       font-size: 1em;
-      padding: 6px 12px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
+      padding: 10px 40px 10px 16px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background-color: #fff;
+      color: #334155;
       outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 10px center;
+      background-repeat: no-repeat;
+      background-size: 1.5em 1.5em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
       --wails-draggable: no-drag;
+    }
+
+    select:hover {
+      border-color: #cbd5e1;
+      background-color: #f8fafc;
+    }
+
+    select:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
     }
     button {
       background: #2563eb;
@@ -66,6 +91,7 @@
       box-shadow: 0 2px 8px rgba(36,38,80,0.09);
       transition: background 0.18s;
       --wails-draggable: no-drag;
+      width: 200px;
     }
     button:disabled {
       background: #90a4ae;
@@ -139,6 +165,9 @@
       window.runtime?.LogPrint(e.message)
     })
 
+    let isCompressing = false;
+    let compressAbortController = null;
+
     window.runtime.EventsOn("progress", (percent) => {
       progressBar.style.width = percent + "%";
       progressBar.textContent = percent + "%";
@@ -171,10 +200,21 @@
     }, true);
 
     compressBtn.addEventListener("click", async () => {
-      compressBtn.disabled = true;
+      if (isCompressing) {
+          // Cancel logic
+          compressBtn.disabled = true; // Prevent double clicks
+          compressBtn.textContent = "Cancelling...";
+          await window.go.main.App.Cancel();
+          return;
+      }
+
+      // Start compression
+      isCompressing = true;
+      // compressBtn.disabled = true; // Keep enabled to allow cancel
       resultDiv.textContent = "";
       errorDiv.textContent = "";
-      compressBtn.textContent = "Compressing...";
+      compressBtn.textContent = "Cancel";
+      compressBtn.style.backgroundColor = "#d32f2f"; // Red color for cancel
       
       progressContainer.style.display = "block";
       progressBar.style.width = "0%";
@@ -184,10 +224,18 @@
         const outPath = await window.go.main.App.Compress(filePath, resolution.value);
         resultDiv.textContent = "Saved as: " + outPath;
       } catch (err) {
-        errorDiv.textContent = "Error: " + (err.message || err);
+        if (err.includes("cancelled")) {
+             // Do nothing on cancel, clean up handled in finally
+        } else {
+             errorDiv.textContent = "Error: " + (err.message || err);
+        }
+      } finally {
+        isCompressing = false;
+        compressBtn.textContent = "Compress & Save";
+        compressBtn.style.backgroundColor = "#2563eb"; // Revert color
+        compressBtn.disabled = false;
+        progressContainer.style.display = "none";
       }
-      compressBtn.textContent = "Compress & Save";
-      compressBtn.disabled = false;
     });
   </script>
 </body>

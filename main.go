@@ -41,9 +41,9 @@ func main() {
 		BackgroundColour: &options.RGBA{R: 255, G: 255, B: 255, A: 255},
 		Assets:           assets,
 		Menu:             nil,
-		Logger:           nil,
 		LogLevel:         logger.DEBUG,
 		OnStartup:        app.startup,
+		OnBeforeClose:    app.beforeClose,
 		WindowStartState: options.Normal,
 		Bind: []interface{}{
 			app,

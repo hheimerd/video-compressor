@@ -3,12 +3,13 @@ package ffmpeg
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
 )
 
-func runFFmpegInternal(binaryData []byte, executableName string, args ...string) (string, string, error) {
+func runFFmpegInternal(ctx context.Context, binaryData []byte, executableName string, args ...string) (string, string, error) {
 	tempDir, err := os.MkdirTemp("", "ffmpeg-")
 	if err != nil {
 		return "", "", err
@@ -24,7 +25,7 @@ func runFFmpegInternal(binaryData []byte, executableName string, args ...string)
 		return "", "", err
 	}
 
-	cmd := exec.Command(ffmpegPath, args...)
+	cmd := exec.CommandContext(ctx, ffmpegPath, args...)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -36,7 +37,7 @@ func runFFmpegInternal(binaryData []byte, executableName string, args ...string)
 	return stdout.String(), stderr.String(), nil
 }
 
-func runFFmpegProgressInternal(binaryData []byte, executableName string, onProgress func(string), args ...string) (string, string, error) {
+func runFFmpegProgressInternal(ctx context.Context, binaryData []byte, executableName string, onProgress func(string), args ...string) (string, string, error) {
 	tempDir, err := os.MkdirTemp("", "ffmpeg-")
 	if err != nil {
 		return "", "", err
@@ -52,7 +53,7 @@ func runFFmpegProgressInternal(binaryData []byte, executableName string, onProgr
 		return "", "", err
 	}
 
-	cmd := exec.Command(ffmpegPath, args...)
+	cmd := exec.CommandContext(ctx, ffmpegPath, args...)
 
 	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {

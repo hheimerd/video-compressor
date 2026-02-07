@@ -3,9 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"sync"
 
 	"VideoCompressor/pkg/ffmpeg"
 
@@ -14,7 +17,9 @@ import (
 
 // App struct
 type App struct {
-	ctx context.Context
+	ctx               context.Context
+	cancelCompression context.CancelFunc
+	mu                sync.Mutex
 }
 
 // NewApp creates a new App application struct
@@ -39,6 +44,22 @@ func (a *App) Compress(inputPath, resolution string) (string, error) {
 	if !ok {
 		return "", fmt.Errorf("Unknown resolution: %s", resolution)
 	}
+
+	// Create a cancellable context for this compression task
+	ctx, cancel := context.WithCancel(a.ctx)
+	a.mu.Lock()
+	a.cancelCompression = cancel
+	a.mu.Unlock()
+
+	defer func() {
+		a.mu.Lock()
+		if a.cancelCompression != nil {
+			cancel() // Ensure cleanup
+			a.cancelCompression = nil
+		}
+		a.mu.Unlock()
+	}()
+
 	ext := filepath.Ext(inputPath)
 	outFile := strings.TrimSuffix(inputPath, ext) + "_compressed" + ext
 
@@ -49,8 +70,11 @@ func (a *App) Compress(inputPath, resolution string) (string, error) {
 		"-of", "default=noprint_wrappers=1:nokey=1",
 		inputPath,
 	}
-	durationStr, probeErrStr, err := ffmpeg.RunFFprobe(probeArgs...)
+	durationStr, probeErrStr, err := ffmpeg.RunFFprobe(ctx, probeArgs...)
 	if err != nil {
+		if ctx.Err() == context.Canceled {
+			return "", fmt.Errorf("compression cancelled")
+		}
 		return "", fmt.Errorf("ffprobe error: %v\nstderr: %s", err, probeErrStr)
 	}
 
@@ -82,8 +106,13 @@ func (a *App) Compress(inputPath, resolution string) (string, error) {
 		}
 	}
 
-	stdout, stderr, err := ffmpeg.RunFFmpegProgress(onProgress, args...)
+	stdout, stderr, err := ffmpeg.RunFFmpegProgress(ctx, onProgress, args...)
 	if err != nil {
+		// specific check for context canceled?
+		if ctx.Err() == context.Canceled {
+			os.Remove(outFile)
+			return "", fmt.Errorf("compression cancelled")
+		}
 		return "", fmt.Errorf("ffmpeg error: %v\nStdout: %s\nStderr: %s", err, stdout, stderr)
 	}
 	return outFile, nil
@@ -97,4 +126,22 @@ func (a *App) OpenFileDialog(ctx context.Context) (string, error) {
 		},
 	})
 	return result, err
+}
+
+// beforeClose is called when the application is about to close
+func (a *App) beforeClose(ctx context.Context) (prevent bool) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.cancelCompression != nil {
+		a.cancelCompression()
+	}
+	return false
+}
+
+func (a *App) Cancel() {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.cancelCompression != nil {
+		a.cancelCompression()
+	}
 }
