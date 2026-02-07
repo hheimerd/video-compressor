@@ -7,6 +7,7 @@
   <style>
     body {
       --wails-drop-target: drop;
+      --wails-draggable: drag;
       background: #f0f4f8;
       font-family: 'Segoe UI', Arial, sans-serif;
       margin: 0;
@@ -51,6 +52,7 @@
       border-radius: 6px;
       border: 1px solid #ccc;
       outline: none;
+      --wails-draggable: no-drag;
     }
     button {
       background: #2563eb;
@@ -63,6 +65,7 @@
       cursor: pointer;
       box-shadow: 0 2px 8px rgba(36,38,80,0.09);
       transition: background 0.18s;
+      --wails-draggable: no-drag;
     }
     button:disabled {
       background: #90a4ae;
