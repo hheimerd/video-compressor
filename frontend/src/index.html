@@ -237,7 +237,11 @@
 
       try {
         const outPath = await window.go.main.App.Compress(filePath, resolution.value, speed.value);
-        resultDiv.textContent = "Saved as: " + outPath;
+        resultDiv.textContent = "Successfully compressed!";
+        window.go.main.App.ShowInFileExplorer(outPath);
+        setTimeout(() => {
+            resultDiv.textContent = "";
+        }, 5000);
       } catch (err) {
         if (err.includes("cancelled")) {
              // Do nothing on cancel, clean up handled in finally

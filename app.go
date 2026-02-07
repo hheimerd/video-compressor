@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -151,4 +152,9 @@ func (a *App) Cancel() {
 	if a.cancelCompression != nil {
 		a.cancelCompression()
 	}
+}
+
+func (a *App) ShowInFileExplorer(path string) {
+	cmd := exec.Command("open", "-R", path)
+	cmd.Run()
 }
