@@ -6,15 +6,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
+      box-sizing: border-box;
       --wails-drop-target: drop;
       --wails-draggable: drag;
       background: #f0f4f8;
       font-family: 'Segoe UI', Arial, sans-serif;
       margin: 0;
       display: flex;
-      height: 100vh;
-      align-items: center;
+      max-height: 100vh;
       justify-content: center;
+      padding: 40px 10px;
+      height: 100vh;
     }
     .container {
       background: #fff;
@@ -121,11 +123,18 @@
       height: 20px;
       background-color: #2563eb;
       width: 0%;
+      min-width: 20px;
       transition: width 0.3s ease;
       text-align: center;
       line-height: 20px;
       color: white;
       font-size: 12px;
+    }
+    #filename {
+      width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   </style>
 </head>
@@ -139,6 +148,11 @@
       <option value="1280x720">1280x720 (HD)</option>
       <option value="854x480">854x480 (SD)</option>
     </select>
+    <select id="speed">
+      <option value="ultrafast">Very Fast</option>
+      <option value="fast">Fast</option>
+      <option value="medium" selected>Slow (Better Quality)</option>
+    </select>
     <br>
     <button id="compressBtn" disabled>Compress & Save</button>
     <div id="progressContainer" class="progress-container">
@@ -151,6 +165,7 @@
   <script type="module">
     const filenameDiv = document.getElementById("filename");
     const resolution = document.getElementById("resolution");
+    const speed = document.getElementById("speed");
     const compressBtn = document.getElementById("compressBtn");
     const resultDiv = document.getElementById("result");
     const errorDiv = document.getElementById("error");
@@ -221,7 +236,7 @@
       progressBar.textContent = "0%";
 
       try {
-        const outPath = await window.go.main.App.Compress(filePath, resolution.value);
+        const outPath = await window.go.main.App.Compress(filePath, resolution.value, speed.value);
         resultDiv.textContent = "Saved as: " + outPath;
       } catch (err) {
         if (err.includes("cancelled")) {

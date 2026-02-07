@@ -25,7 +25,7 @@ func main() {
 	err := wails.Run(&options.App{
 		Title:             "",
 		Width:             450,
-		Height:            400,
+		Height:            550,
 		MinWidth:          450,
 		MinHeight:         400,
 		DisableResize:     false,

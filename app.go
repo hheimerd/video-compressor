@@ -39,10 +39,16 @@ var bitrates = map[string]string{
 	"854x480":   "500k",
 }
 
-func (a *App) Compress(inputPath, resolution string) (string, error) {
+func (a *App) Compress(inputPath, resolution, speed string) (string, error) {
 	bitrate, ok := bitrates[resolution]
 	if !ok {
 		return "", fmt.Errorf("Unknown resolution: %s", resolution)
+	}
+
+	// Validate speed/preset
+	// allowed: ultrafast, fast, medium. Default to medium if unknown.
+	if speed != "ultrafast" && speed != "fast" && speed != "medium" {
+		speed = "medium"
 	}
 
 	// Create a cancellable context for this compression task
@@ -87,6 +93,7 @@ func (a *App) Compress(inputPath, resolution string) (string, error) {
 		"-i", inputPath,
 		"-vf", fmt.Sprintf("scale=%s", resolution),
 		"-b:v", bitrate,
+		"-preset", speed,
 		"-c:a", "copy",
 		"-y", // Overwrite output file
 		outFile,
