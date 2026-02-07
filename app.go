@@ -3,13 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
-	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
+	"VideoCompressor/pkg/ffmpeg" // Import the new ffmpeg package
 )
 
 // App struct
@@ -42,26 +40,6 @@ func (a *App) Compress(inputPath, resolution string) (string, error) {
 	ext := filepath.Ext(inputPath)
 	outFile := strings.TrimSuffix(inputPath, ext) + "_compressed" + ext
 
-	execPath, osErr := os.Executable()
-	if osErr != nil {
-		return "", fmt.Errorf("os error: %v", osErr)
-	}
-
-	// Получить директорию, где лежит .exe или исполняемый файл
-	appDir := filepath.Dir(execPath)
-
-	// Собрать путь до нужного бинарника (например, mytool)
-	var ffmpegPath string
-
-	switch runtime.GOOS {
-	case "windows":
-		ffmpegPath = filepath.Join(appDir, "ffmpeg.exe")
-	case "darwin":
-		ffmpegPath = filepath.Join(appDir, "..", "..", "..", "ffmpeg")
-	default:
-		ffmpegPath = filepath.Join(appDir, "ffmpeg")
-	}
-
 	args := []string{
 		"-i", inputPath,
 		"-vf", fmt.Sprintf("scale=%s", resolution),
@@ -69,10 +47,10 @@ func (a *App) Compress(inputPath, resolution string) (string, error) {
 		"-c:a", "copy",
 		outFile,
 	}
-	cmd := exec.Command(ffmpegPath, args...)
-	err := cmd.Run()
+
+	stdout, stderr, err := ffmpeg.RunFFmpeg(args...)
 	if err != nil {
-		return "", fmt.Errorf("ffmpeg error: %v", err)
+		return "", fmt.Errorf("ffmpeg error: %v\nStdout: %s\nStderr: %s", err, stdout, stderr)
 	}
 	return outFile, nil
 }

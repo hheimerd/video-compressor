@@ -2,7 +2,8 @@ build/bin
 frontend/wailsjs
 
 .DS_Store
-build
+
+pkg/ffmpeg/ffmpeg_binaries
 
 # Wails junk files
 .syso
