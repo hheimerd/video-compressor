@@ -19,3 +19,7 @@ func runFFmpeg(args ...string) (string, string, error) {
 func runFFprobe(args ...string) (string, string, error) {
 	return runFFmpegInternal(ffprobeBinary, "ffprobe", args...)
 }
+
+func runFFmpegProgress(onProgress func(string), args ...string) (string, string, error) {
+	return runFFmpegProgressInternal(ffmpegBinary, "ffmpeg", onProgress, args...)
+}

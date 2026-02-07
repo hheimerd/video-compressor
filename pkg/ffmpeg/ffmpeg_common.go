@@ -1,15 +1,15 @@
 package ffmpeg
 
 import (
+	"bufio"
 	"bytes"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 )
 
 func runFFmpegInternal(binaryData []byte, executableName string, args ...string) (string, string, error) {
-	tempDir, err := ioutil.TempDir("", "ffmpeg-")
+	tempDir, err := os.MkdirTemp("", "ffmpeg-")
 	if err != nil {
 		return "", "", err
 	}
@@ -19,7 +19,7 @@ func runFFmpegInternal(binaryData []byte, executableName string, args ...string)
 
 	// Set permissions to 0755 (rwx-rx-rx) to ensure the binary is executable
 	// On Windows, this is not strictly necessary for .exe files but is good practice.
-	err = ioutil.WriteFile(ffmpegPath, binaryData, 0755)
+	err = os.WriteFile(ffmpegPath, binaryData, 0755)
 	if err != nil {
 		return "", "", err
 	}
@@ -34,4 +34,52 @@ func runFFmpegInternal(binaryData []byte, executableName string, args ...string)
 	}
 
 	return stdout.String(), stderr.String(), nil
+}
+
+func runFFmpegProgressInternal(binaryData []byte, executableName string, onProgress func(string), args ...string) (string, string, error) {
+	tempDir, err := os.MkdirTemp("", "ffmpeg-")
+	if err != nil {
+		return "", "", err
+	}
+	defer os.RemoveAll(tempDir)
+
+	ffmpegPath := filepath.Join(tempDir, executableName)
+
+	// Set permissions to 0755 (rwx-rx-rx) to ensure the binary is executable
+	// On Windows, this is not strictly necessary for .exe files but is good practice.
+	err = os.WriteFile(ffmpegPath, binaryData, 0755)
+	if err != nil {
+		return "", "", err
+	}
+
+	cmd := exec.Command(ffmpegPath, args...)
+
+	stdoutPipe, err := cmd.StdoutPipe()
+	if err != nil {
+		return "", "", err
+	}
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	if err := cmd.Start(); err != nil {
+		return "", stderr.String(), err
+	}
+
+	var stdoutBuf bytes.Buffer
+
+	scanner := bufio.NewScanner(stdoutPipe)
+	for scanner.Scan() {
+		line := scanner.Text()
+		stdoutBuf.WriteString(line + "\n")
+		// FFmpeg with -progress pipe:1 writes key=value pairs.
+		// We pass every line to the callback.
+		onProgress(line)
+	}
+
+	if err := cmd.Wait(); err != nil {
+		return stdoutBuf.String(), stderr.String(), err
+	}
+
+	return stdoutBuf.String(), stderr.String(), nil
 }
