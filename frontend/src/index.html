@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Video Compressor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      --wails-drop-target: drop;
+      background: #f0f4f8;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      display: flex;
+      height: 100vh;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(60,60,115,0.18);
+      padding: 32px;
+      min-width: 340px;
+      max-width: 380px;
+      text-align: center;
+    }
+    h2 {
+      margin-bottom: 18px;
+      color: #2563eb;
+      letter-spacing: 1px;
+    }
+    #dropzone {
+      --wails-drop-target: drop;
+      border: 2px dashed #2563eb;
+      border-radius: 8px;
+      padding: 28px;
+      background: #f5f8ff;
+      color: #888;
+      margin-bottom: 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #dropzone.wails-drop-target-active  {
+      background: #e0eaff;
+      color: #2563eb;
+    }
+    select {
+      margin-bottom: 20px;
+      font-size: 1em;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      outline: none;
+    }
+    button {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 24px;
+      font-size: 1em;
+      font-weight: 500;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(36,38,80,0.09);
+      transition: background 0.18s;
+    }
+    button:disabled {
+      background: #90a4ae;
+      cursor: default;
+    }
+    .result {
+      margin-top: 24px;
+      color: #388e3c;
+      font-weight: 500;
+      word-break: break-all;
+    }
+    .error {
+      margin-top: 24px;
+      color: #d32f2f;
+      font-weight: 500;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Video Compressor</h2>
+    <div id="dropzone" style="--wails-drop-target: drop;" class="dropzone">Drag & drop your video file here</div>
+    <div id="filename" style="margin-bottom:14px; color:#2563eb;"></div>
+    <select id="resolution">
+      <option value="1920x1080">1920x1080 (FullHD)</option>
+      <option value="1280x720">1280x720 (HD)</option>
+      <option value="854x480">854x480 (SD)</option>
+    </select>
+    <br>
+    <button id="compressBtn" disabled>Compress & Save</button>
+    <div id="result" class="result"></div>
+    <div id="error" class="error"></div>
+    <script src="wails.js"></script>
+  </div>
+  <script type="module">
+    const filenameDiv = document.getElementById("filename");
+    const resolution = document.getElementById("resolution");
+    const compressBtn = document.getElementById("compressBtn");
+    const resultDiv = document.getElementById("result");
+    const errorDiv = document.getElementById("error");
+
+    let filePath = "";
+
+    window.addEventListener('unhandledrejection', (e) => {
+      window.runtime?.LogPrint(e.message)
+    })
+
+    window.runtime?.OnFileDrop((x, y, paths) => {
+      const [path] = paths;
+      if (!path) {
+        return;
+      }
+
+      const fileName = path.split(/[\\//]/).at(-1);
+
+      filePath = path;
+      filenameDiv.textContent = "Selected: " + fileName;
+      compressBtn.disabled = false;
+      resultDiv.textContent = "";
+      errorDiv.textContent = "";
+    }, true);
+
+    compressBtn.addEventListener("click", async () => {
+      compressBtn.disabled = true;
+      resultDiv.textContent = "";
+      errorDiv.textContent = "";
+      compressBtn.textContent = "Compressing...";
+      try {
+        const outPath = await window.go.main.App.Compress(filePath, resolution.value);
+        resultDiv.textContent = "Saved as: " + outPath;
+      } catch (err) {
+        errorDiv.textContent = "Error: " + (err.message || err);
+      }
+      compressBtn.textContent = "Compress & Save";
+      compressBtn.disabled = false;
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+build/bin
+frontend/wailsjs
+
+.DS_Store
+build
+
+# Wails junk files
+.syso
+
+# Go files
+go.sum
+
+# IDEs
+.idea
+.vscode
+
+# System enviroment variables
+env
