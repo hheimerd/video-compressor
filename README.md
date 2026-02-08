@@ -23,6 +23,14 @@ If you encounter a warning that the application cannot be opened because the dev
 3.  Select **Open** from the menu.
 4.  Click **Open** in the confirmation dialog.
 
+OR allow the launch through the settings
+
+Privacy & Security -> Open anyway
+
+<img width="709" height="430" alt="Screenshot 2026-02-08 at 13 01 12" src="https://github.com/user-attachments/assets/ae163885-5d48-40f4-a0df-4b77f19766fb" />
+
+
+
 ## How to Use
 
 1.  **Drag and Drop**: Drag your video file into the designated "Drag & drop your video file here" area.
