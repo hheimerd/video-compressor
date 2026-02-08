@@ -14,6 +14,15 @@ A simple desktop application built with Wails for compressing video files. Easil
 
 The easiest way to install the Video Compressor is to download the appropriate archive for your operating system from the [Releases page](https://github.com/hheimerd/video-compressor/releases).
 
+### macOS
+
+If you encounter a warning that the application cannot be opened because the developer cannot be verified:
+
+1.  Hold the **Option** key.
+2.  **Right-click** (or **Control-click**) the application icon.
+3.  Select **Open** from the menu.
+4.  Click **Open** in the confirmation dialog.
+
 ## How to Use
 
 1.  **Drag and Drop**: Drag your video file into the designated "Drag & drop your video file here" area.
