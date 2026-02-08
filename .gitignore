@@ -1,5 +1,10 @@
-build/bin
+build/bin/
+build/windows/
+build/darwin/
+build/linux/
+
 frontend/wailsjs
+releases
 
 .DS_Store
 

@@ -70,22 +70,14 @@ func (a *App) Compress(inputPath, resolution, speed string) (string, error) {
 	ext := filepath.Ext(inputPath)
 	outFile := strings.TrimSuffix(inputPath, ext) + "_compressed" + ext
 
-	// 1. Get Duration using ffprobe
-	probeArgs := []string{
-		"-v", "error",
-		"-show_entries", "format=duration",
-		"-of", "default=noprint_wrappers=1:nokey=1",
-		inputPath,
-	}
-	durationStr, probeErrStr, err := ffmpeg.RunFFprobe(ctx, probeArgs...)
+	// 1. Get Duration using ffmpeg parsing
+	durationSec, err := ffmpeg.GetDuration(ctx, inputPath)
 	if err != nil {
 		if ctx.Err() == context.Canceled {
 			return "", fmt.Errorf("compression cancelled")
 		}
-		return "", fmt.Errorf("ffprobe error: %v\nstderr: %s", err, probeErrStr)
+		return "", fmt.Errorf("ffmpeg duration error: %v", err)
 	}
-
-	durationSec, _ := strconv.ParseFloat(strings.TrimSpace(durationStr), 64)
 	totalMicroseconds := int64(durationSec * 1000000)
 
 	// 2. Run ffmpeg with progress
