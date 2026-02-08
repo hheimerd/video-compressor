@@ -27,7 +27,7 @@ func main() {
 		Width:             450,
 		Height:            550,
 		MinWidth:          450,
-		MinHeight:         400,
+		MinHeight:         550,
 		DisableResize:     false,
 		Fullscreen:        false,
 		Frameless:         false,

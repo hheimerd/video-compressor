@@ -15,8 +15,11 @@
       display: flex;
       max-height: 100vh;
       justify-content: center;
+      align-items: center;
       padding: 40px 10px;
       height: 100vh;
+      min-height: 500px;
+      overflow-y: auto;
     }
     .container {
       background: #fff;
@@ -26,6 +29,8 @@
       min-width: 340px;
       max-width: 380px;
       text-align: center;
+      overflow: hidden;
+      min-height: fit-content;
     }
     h2 {
       margin-bottom: 18px;
@@ -100,7 +105,7 @@
       box-shadow: 0 2px 8px rgba(36,38,80,0.09);
       transition: background 0.18s;
       --wails-draggable: no-drag;
-      width: 200px;
+      width: 240px;
     }
     button:hover:not(:disabled) {
       opacity: 0.8;

@@ -26,6 +26,7 @@ func runFFmpegInternal(ctx context.Context, binaryData []byte, executableName st
 	}
 
 	cmd := exec.CommandContext(ctx, ffmpegPath, args...)
+	prepareCmd(cmd)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -54,6 +55,7 @@ func runFFmpegProgressInternal(ctx context.Context, binaryData []byte, executabl
 	}
 
 	cmd := exec.CommandContext(ctx, ffmpegPath, args...)
+	prepareCmd(cmd)
 
 	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {
