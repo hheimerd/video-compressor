@@ -118,11 +118,11 @@ func (a *App) Compress(inputPath, resolution, speed string) (string, error) {
 	return outFile, nil
 }
 
-func (a *App) OpenFileDialog(ctx context.Context) (string, error) {
-	result, err := wailsRuntime.OpenFileDialog(ctx, wailsRuntime.OpenDialogOptions{
+func (a *App) OpenFileDialog() (string, error) {
+	result, err := wailsRuntime.OpenFileDialog(a.ctx, wailsRuntime.OpenDialogOptions{
 		Title: "Select a video file",
 		Filters: []wailsRuntime.FileFilter{
-			{DisplayName: "Video files", Pattern: "*.mp4;*.mkv;*.avi"},
+			{DisplayName: "Video files", Pattern: "*.mp4;*.mov;*.avi;*.mkv;*.webm"},
 		},
 	})
 	return result, err

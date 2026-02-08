@@ -81,6 +81,13 @@
       border-color: #2563eb;
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
     }
+    select:disabled {
+      background-color: #f8fafc;
+      cursor: default;
+      box-shadow: none;
+      border-color: #e2e8f0;
+    }
+
     button {
       background: #2563eb;
       color: #fff;
@@ -95,6 +102,10 @@
       --wails-draggable: no-drag;
       width: 200px;
     }
+    button:hover:not(:disabled) {
+      opacity: 0.8;
+    }
+
     button:disabled {
       background: #90a4ae;
       cursor: default;
@@ -132,17 +143,66 @@
     }
     #filename {
       width: 100%;
+      cursor: alias;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    #filenameText {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      min-width: 0;
+      flex-shrink: 1;
+    }
+    .remove-file-btn {
+      background: none;
+      border: none;
+      color: #ef4444; /* Red color */
+      cursor: pointer;
+      font-size: 1.2em;
+      padding: 0 5px;
+      line-height: 1;
+      display: none; /* Hidden by default */
+      transition: color 0.2s;
+      width: auto; /* Override general button width */
+      box-shadow: none;
+      flex-shrink: 0;
+    }
+    .remove-file-btn:hover {
+      color: #dc2626; /* Darker red on hover */
+      opacity: 1;
+    }
+
+    /* State Management */
+    /* Remove Button Visibility */
+    .container[data-state="idle"] .remove-file-btn,
+    .container[data-state="compressing"] .remove-file-btn { display: none; }
+    .container[data-state="ready"] .remove-file-btn { display: inline-block; }
+
+    /* Progress Container Visibility */
+    .container[data-state="idle"] .progress-container,
+    .container[data-state="ready"] .progress-container { display: none; }
+    .container[data-state="compressing"] .progress-container { display: block; }
+
+    /* Compress Button Contextual Style */
+    .container[data-state="compressing"] #compressBtn { background-color: #d32f2f; }
+    
+    /* Progress Bar Variable */
+    .progress-bar {
+        width: var(--progress, 0%);
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="container" data-state="idle">
     <h2>Video Compressor</h2>
     <div id="dropzone" style="--wails-drop-target: drop;" class="dropzone">Drag & drop your video file here</div>
-    <div id="filename" style="margin-bottom:14px; color:#2563eb;"></div>
+    <div id="filename" style="margin-bottom:14px; color:#2563eb;">
+      <span id="filenameText"></span>
+      <button id="removeFileBtn" class="remove-file-btn" title="Remove file">×</button>
+    </div>
     <select id="resolution">
       <option value="1920x1080">1920x1080 (FullHD)</option>
       <option value="1280x720">1280x720 (HD)</option>
@@ -163,7 +223,10 @@
     <script src="wails.js"></script>
   </div>
   <script type="module">
+    const container = document.querySelector('.container');
     const filenameDiv = document.getElementById("filename");
+    const filenameText = document.getElementById("filenameText");
+    const removeFileBtn = document.getElementById("removeFileBtn");
     const resolution = document.getElementById("resolution");
     const speed = document.getElementById("speed");
     const compressBtn = document.getElementById("compressBtn");
@@ -183,16 +246,8 @@
     let isCompressing = false;
     let compressAbortController = null;
 
-    window.runtime.EventsOn("progress", (percent) => {
-      progressBar.style.width = percent + "%";
-      progressBar.textContent = percent + "%";
-    });
-
-    window.runtime?.OnFileDrop((x, y, paths) => {
-      const [path] = paths;
-      if (!path) {
-        return;
-      }
+    const handleFile = (path) => {
+      if (!path) return;
 
       const fileName = path.split(/[\\//]/).at(-1);
       const fileExtension = fileName.substring(fileName.lastIndexOf('.')).toLowerCase(); // Get file extension
@@ -200,7 +255,8 @@
       // Check if file extension is supported
       if (!supportedExtensions.includes(fileExtension)) {
         errorDiv.textContent = `Error: Unsupported file format. Supported formats are: ${supportedExtensions.join(", ")}.`;
-        filenameDiv.textContent = "";
+        filenameText.textContent = "";
+        container.dataset.state = "idle";
         filePath = "";
         compressBtn.disabled = true;
         resultDiv.textContent = "";
@@ -208,11 +264,46 @@
       }
 
       filePath = path;
-      filenameDiv.textContent = "Selected: " + fileName;
+      filenameText.textContent = "Selected: " + fileName;
+      filenameDiv.title = fileName;
+      container.dataset.state = "ready";
       compressBtn.disabled = false;
       resultDiv.textContent = "";
       errorDiv.textContent = ""; // Clear any previous error
+    };
+
+    window.runtime.EventsOn("progress", (percent) => {
+      progressBar.style.setProperty('--progress', percent + "%");
+      progressBar.textContent = percent + "%";
+    });
+
+    window.runtime?.OnFileDrop((x, y, paths) => {
+      const [path] = paths;
+      handleFile(path);
     }, true);
+
+    const dropzone = document.getElementById("dropzone");
+    dropzone.addEventListener("click", async () => {
+        try {
+            const path = await window.go.main.App.OpenFileDialog();
+            if (path) {
+                handleFile(path);
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    });
+
+    removeFileBtn.addEventListener("click", (e) => {
+        e.stopPropagation(); // Prevent bubbling if nested or needed
+        filePath = "";
+        filenameText.textContent = "";
+        filenameDiv.title = "";
+        container.dataset.state = "idle";
+        compressBtn.disabled = true;
+        resultDiv.textContent = "";
+        errorDiv.textContent = "";
+    });
 
     compressBtn.addEventListener("click", async () => {
       if (isCompressing) {
@@ -225,14 +316,17 @@
 
       // Start compression
       isCompressing = true;
-      // compressBtn.disabled = true; // Keep enabled to allow cancel
+      // Disable select elements
+      resolution.disabled = true;
+      speed.disabled = true;
+      
+      container.dataset.state = "compressing";
+      
       resultDiv.textContent = "";
       errorDiv.textContent = "";
       compressBtn.textContent = "Cancel";
-      compressBtn.style.backgroundColor = "#d32f2f"; // Red color for cancel
       
-      progressContainer.style.display = "block";
-      progressBar.style.width = "0%";
+      progressBar.style.setProperty('--progress', "0%");
       progressBar.textContent = "0%";
 
       try {
@@ -251,9 +345,12 @@
       } finally {
         isCompressing = false;
         compressBtn.textContent = "Compress & Save";
-        compressBtn.style.backgroundColor = "#2563eb"; // Revert color
         compressBtn.disabled = false;
-        progressContainer.style.display = "none";
+        resolution.disabled = false;
+        speed.disabled = false;
+        
+        // Restore state based on whether we still have a file
+        container.dataset.state = filePath ? "ready" : "idle";
       }
     });
   </script>
